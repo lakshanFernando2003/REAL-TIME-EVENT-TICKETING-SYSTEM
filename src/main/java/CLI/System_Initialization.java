@@ -83,7 +83,7 @@ public class System_Initialization {
             System.out.println("Invalid Data Type... Enter a correct Input.  ");
             initialize();
         }
-
+        //Small loading animation to CLI
         String message = "System Configuring...";
         int delay = 200;
         for (int cycle = 0; cycle < 3; cycle++) {

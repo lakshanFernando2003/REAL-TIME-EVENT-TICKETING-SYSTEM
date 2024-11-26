@@ -1,5 +1,10 @@
 package CLI;
 
+import java.io.FileWriter;
+import java.io.IOException;
+
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 public class System_configuration {
     private int Total_Tickets; // Total Number Of Tickets
     private int Ticket_Release_Rate; // Ticket Releasing Rate
@@ -37,6 +42,16 @@ public class System_configuration {
         Max_Ticket_Capacity = max_Ticket_Capacity;
     }
 
+    // File saving method
+   public void SaveFile(String filename) {
+     Gson gson = new GsonBuilder().setPrettyPrinting().create();
+     try(FileWriter writer = new FileWriter(filename)){
+         gson.toJson(this,writer); // converting to json format
+         System.out.println("Configuration file saved as : " + filename);
+     } catch (IOException e){
+         System.out.println("Error! - Failed to save Configuration : " + e.getMessage());
+     }
+   }
 
     @Override
     public String toString(){
