@@ -1,5 +1,6 @@
 package CLI;
 
+import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 
@@ -53,10 +54,21 @@ public class System_configuration {
      }
    }
 
+   // Load configuration from JSON file
+    public static  System_configuration LoadFile(String filename){
+        Gson gson = new Gson();
+        try(FileReader Loader = new FileReader(filename)){
+            return gson.fromJson(Loader,System_configuration.class);
+        }catch (IOException e){
+            System.out.println("Error! - Failed to load Configuration: " + e.getMessage());
+            return null;
+        }
+    }
+
     @Override
     public String toString(){
         return "System-Configured Successfully\n"+
-                "Total_tickets = "+Total_Tickets+
+                " Total_tickets = "+Total_Tickets+
                 "\n Ticket release Rate = "+Ticket_Release_Rate+
                 "\n customer Retrieval Rate = "+Customer_Retrieval_Rate+
                 "\n max Ticket Capacity = "+Max_Ticket_Capacity;
