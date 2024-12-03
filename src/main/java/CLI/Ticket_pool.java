@@ -1,66 +1,98 @@
 package CLI;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 public class Ticket_pool {
-    private  final List<String> TicketPool; // To store Thread-safe tickets
-    private final int maxCapacity; // max ticket capacity
-    private  final  int totalTicketLimit; // total ticket allowed
-    private int totalTicketsAdded; // count of total tickets in the pool
+    private final List<String> TicketPool;
+    private final int MaxCapacity;
+    private final int TotalTicketLimit;
+    private boolean WaitLog;
+    private int totalTicketsAdded;
+    private int TotalTicketsSold;
 
-    // constructor
-    public Ticket_pool(int MaxCapacity , int totalTicketLimit){
-        this.maxCapacity = MaxCapacity;
-        this.TicketPool = Collections.synchronizedList(new ArrayList<>());
-        this.totalTicketLimit = totalTicketLimit;
+    public Ticket_pool(int maxCapacity, int totalTicketLimit) {
+        this.TicketPool = new ArrayList<>();
+        MaxCapacity = maxCapacity;
+        TotalTicketLimit = totalTicketLimit;
         this.totalTicketsAdded = 0;
-
+        this.TotalTicketsSold = 0;
+        this.WaitLog = false;
     }
 
-    // Adding tickets to the pool sold by (Vendors)
-    public synchronized void AddTickets(String tickets) throws InterruptedException{
-        while (TicketPool.size()>= maxCapacity){
-            System.out.println("TicketPool is full. Vendor is waiting....");
-            wait(); // wait until space becomes available
+    public synchronized void AddTickets(String ticket) throws InterruptedException {
+        while (TicketPool.size() >= MaxCapacity) {
+            if (!WaitLog) {
+                System.out.println("⸺⸺⸺⸺⸺⸺⸺⸺⸺⸺⸺⸺⸺⸺⸺⸺⸺");
+                System.out.println("Ticket pool is full. Vendor is waiting....");
+                WaitLog = true;
+            }
+            wait();
         }
-        if (totalTicketsAdded < totalTicketLimit) {
-            TicketPool.add(tickets); // adding tickets to the pool
-            totalTicketsAdded++;
-            System.out.println("Ticket added " + tickets + "| Current Tickets : " + TicketPool.size());
-            TicketPool.notifyAll(); // this is to notify the waiting threads.
-        }
+        WaitLog = false;
+        TicketPool.add(ticket); //adding the ticket
+        totalTicketsAdded++;
+        System.out.println("Ticket Pool adding " + ticket + "| Pool size = " + TicketPool.size());
+        notify();
     }
 
-    // Remove tickets from the pool bought by (customer)
-    public synchronized String RemoveTickets() throws InterruptedException{
-        while(TicketPool.isEmpty()){
-            System.out.println("TicketPool is empty. customer is waiting....");
-            TicketPool.wait(); // wait until tickets are available
+    public synchronized String BuyTicket() throws InterruptedException {
+        while (TicketPool.isEmpty()) {
+            if (AllTicketsSold()) {
+                notifyAll();
+                return null;
+            } else {
+                if (!WaitLog) {
+                    System.out.println("⸺⸺⸺⸺⸺⸺⸺⸺⸺⸺⸺⸺⸺⸺⸺⸺⸺");
+                    System.out.println("Ticket pool is empty. customer is waiting....");
+                    WaitLog = true;
+                }
+                wait();
+            }
         }
-        String tickets = TicketPool.removeFirst();
-        System.out.println("Ticket removed: " + tickets + " | Remaining Tickets: " + TicketPool.size());
-        TicketPool.notifyAll();
-        return tickets;
+        WaitLog = false;
+        System.out.println("⸺⸺⸺⸺⸺⸺⸺⸺⸺⸺⸺⸺⸺⸺⸺⸺⸺");
+        System.out.println("Customer running....");
+        String ticket = TicketPool.removeFirst();
+        TotalTicketsSold++;
+
+        notify();
+        return ticket;
     }
 
-    // check current ticket count
-    public int getTicketCount(){
-        synchronized (TicketPool){
-            return TicketPool.size();
-        }
+    public synchronized boolean AllTicketsSold() {
+        return totalTicketsAdded >= TotalTicketLimit && TicketPool.isEmpty();
     }
 
-    // getting the total tickets added
-    public  synchronized  int getTotalTicketsAdded(){
+    public synchronized int getTotalTicketsAdded() {
         return totalTicketsAdded;
     }
 
-    // get the limit of tickets
-    public  int getTotalTicketLimit(){
-        return totalTicketLimit;
+    public synchronized int getTotalTicketsSold() {
+        return TotalTicketsSold;
     }
 
+    public synchronized int getCurrentPoolSize() {
+        return TicketPool.size();
+    }
+
+    public synchronized int getTotalTicketLimit() {
+        return TotalTicketLimit;
+    }
+
+    public int getMaxCapacity() {
+        return MaxCapacity;
+    }
+
+    public synchronized void setWaitLog(boolean waitLog){
+        WaitLog = waitLog;
+    }
+
+    public synchronized boolean WaitLog() {
+        return WaitLog;
+    }
 
 }
+
+
+
