@@ -1,7 +1,9 @@
 package CLI;
-import java.util.InputMismatchException;
-import java.util.Scanner;
 
+import java.util.ArrayList;
+import java.util.InputMismatchException;
+import java.util.List;
+import java.util.Scanner;
 
 public class System_Initialization {
     //Active configuration for the system
@@ -26,7 +28,7 @@ public class System_Initialization {
             Scanner User_option = new Scanner(System.in);
             System.out.println("Select an option : ");
             int option = User_option.nextInt();
-            if (option< 0 || option >2){
+            if (option< 0 || option > 2){
                 System.out.println("Please choose a valid option to continue");
                 System_run();
             }else{
@@ -47,7 +49,6 @@ public class System_Initialization {
                         throw new IllegalStateException("Unexpected value: " + option);
                 }
             }
-
 
         }catch (InputMismatchException e){
             System.out.println("Please use the recommended data type");
@@ -77,7 +78,7 @@ public class System_Initialization {
         }
 
         // input and validating ticket release rate
-        System.out.println("Enter Ticket Release Rate(ms) : ");
+        System.out.println("Enter Ticket Release Rate(s) : ");
         try {
             while (true){
                 int TicketReleaseRate = ReadInput.nextInt();
@@ -94,7 +95,7 @@ public class System_Initialization {
         }
 
         // input and validating Customer Retrieval rate
-        System.out.println("Enter Customer Retrieval Rate(ms) : ");
+        System.out.println("Enter Customer Retrieval Rate(s) : ");
         try{
             while (true){
                 int CustomerRetrievalRate = ReadInput.nextInt();
@@ -114,12 +115,12 @@ public class System_Initialization {
         System.out.println("Enter max Ticket Capacity : ");
         try {
             while(true){
-                int MaxTicketCapacity =ReadInput.nextInt();
+                int MaxTicketCapacity = ReadInput.nextInt();
                 if (MaxTicketCapacity > 0 && MaxTicketCapacity <= activeConfig.getTotal_Tickets()){
                     activeConfig.setMax_Ticket_Capacity(MaxTicketCapacity);
                     break;
                 }else {
-                    System.out.println("Invalid input. Release rate must be greater than 0 or equal to total tickets. please try again");
+                    System.out.println("Invalid input. Release rate must be greater than 0 and total tickets. please try again");
                 }
             }
         }catch (InputMismatchException e){
@@ -127,7 +128,9 @@ public class System_Initialization {
             initialize();
         }
         animation();
-        System.out.println(activeConfig+ "\n");
+        System.out.println("⸺⸺⸺⸺⸺⸺⸺⸺⸺⸺⸺⸺⸺⸺⸺⸺⸺");
+        System.out.println(activeConfig );
+        System.out.println("⸺⸺⸺⸺⸺⸺⸺⸺⸺⸺⸺⸺⸺⸺⸺⸺⸺");
         Savefile();
     }
 
@@ -135,7 +138,7 @@ public class System_Initialization {
         //Small loading animation to CLI
         String message = "System Configuring...";
         int delay = 200;
-        for (int cycle = 0; cycle < 3; cycle++) {
+        for (int cycle = 0; cycle < 1; cycle++) {
             for (int i = 0; i < message.length(); i++) {
                 System.out.print(message.charAt(i));
                 try {
@@ -166,6 +169,7 @@ public class System_Initialization {
                     System.out.println("Error ~ Enter Only (Yes or No)");
                 }
             }
+            startSystem();
         }catch (InputMismatchException e){
             System.out.println("Error ~ use correct data type");
             save.next();
@@ -181,13 +185,58 @@ public class System_Initialization {
             activeConfig = System_configuration.LoadFile(FileName);
             if (activeConfig != null){
                 animation();
+                System.out.println("⸺⸺⸺⸺⸺⸺⸺⸺⸺⸺⸺⸺⸺⸺⸺⸺⸺");
                 System.out.println(activeConfig);
+                System.out.println("⸺⸺⸺⸺⸺⸺⸺⸺⸺⸺⸺⸺⸺⸺⸺⸺⸺");
+                startSystem();
                 break;
             } else {
                 System.out.println("Error ~ Failed to Load. Please check the file name and Try Again.");
             }
         }
 
+
     }
+
+
+      public static void startSystem() {
+              // Create TicketPool using activeConfig values
+              Ticket_pool ticketPool = new Ticket_pool(activeConfig.getMax_Ticket_Capacity(), activeConfig.getTotal_Tickets());
+
+              // Create Vendor threads
+          List<Thread> threads = new ArrayList<>();
+          for(int i = 1; i <= 3; i++){
+              threads.add(new Thread(new Vendor(ticketPool, activeConfig.getTicket_Release_Rate(), "Vendor " + i)));
+              threads.add(new Thread(new Customer(ticketPool, "Customer " + i, activeConfig.getCustomer_Retrieval_Rate())));
+          }
+
+
+          for (Thread thread : threads) {
+              thread.start();
+          }
+
+            for (Thread thread : threads) {
+                try {
+                    thread.join();
+                } catch (InterruptedException e) {
+                    System.out.println("Thread was interrupted"+e.getMessage());
+                }
+            }
+
+            menu();
+            System_run();
+
+
+
+      }
+
+
+
+
+
+
+
+
+
 
 }
